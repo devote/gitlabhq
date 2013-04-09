@@ -109,105 +109,32 @@ namespace :gitlab do
       end
     end
 
-    ################################################################################
-    ################################# invoked tasks ################################
-
-    ################################# REPOSITORIES #################################
-
     namespace :repo do
       task :create => :environment do
-        backup_path_repo = File.join(Gitlab.config.backup.path, "repositories")
-        FileUtils.mkdir_p(backup_path_repo) until Dir.exists?(backup_path_repo)
         puts "Dumping repositories ...".blue
-
-        Project.find_each(:batch_size => 1000) do |project|
-          print " * #{project.path_with_namespace} ... "
-
-          if project.empty_repo?
-            puts "[SKIPPED]".cyan
-            next
-          end
-
-          # Create namespace dir if missing
-          FileUtils.mkdir_p(File.join(backup_path_repo, project.namespace.path)) if project.namespace
-
-          # Build a destination path for backup
-          path_to_bundle  = File.join(backup_path_repo, project.path_with_namespace + ".bundle")
-
-          if Kernel.system("cd #{project.repository.path_to_repo} > /dev/null 2>&1 && git bundle create #{path_to_bundle} --all > /dev/null 2>&1")
-            puts "[DONE]".green
-          else
-            puts "[FAILED]".red
-          end
-        end
+        Backup::Repository.new.dump
+        puts "done".green
       end
 
       task :restore => :environment do
-        backup_path_repo = File.join(Gitlab.config.backup.path, "repositories")
-        repos_path = Gitlab.config.gitlab_shell.repos_path
-
-        puts "Restoring repositories ... "
-
-        Project.find_each(:batch_size => 1000) do |project|
-          print "#{project.path_with_namespace} ... "
-
-          if project.namespace
-            project.namespace.ensure_dir_exist
-          end
-
-          # Build a backup path
-          path_to_bundle  = File.join(backup_path_repo, project.path_with_namespace + ".bundle")
-
-          if Kernel.system("git clone --bare #{path_to_bundle} #{project.repository.path_to_repo} > /dev/null 2>&1")
-            puts "[DONE]".green
-          else
-            puts "[FAILED]".red
-          end
-        end
+        puts "Restoring repositories ...".blue
+        Backup::Repository.new.restore
+        puts "done".green
       end
     end
-
-    ###################################### DB ######################################
 
     namespace :db do
       task :create => :environment do
-        backup_path_db = File.join(Gitlab.config.backup.path, "db")
-        FileUtils.mkdir_p(backup_path_db) unless Dir.exists?(backup_path_db)
-
-        puts "Dumping database tables ... ".blue
-        ActiveRecord::Base.connection.tables.each do |tbl|
-          print " * #{tbl.yellow} ... "
-          count = 1
-          File.open(File.join(backup_path_db, tbl + ".yml"), "w+") do |file|
-            ActiveRecord::Base.connection.select_all("SELECT * FROM `#{tbl}`").each do |line|
-              line.delete_if{|k,v| v.blank?}
-              output = {tbl + '_' + count.to_s => line}
-              file << output.to_yaml.gsub(/^---\n/,'') + "\n"
-              count += 1
-            end
-            puts "done".green
-          end
-        end
+        puts "Dumping database ... ".blue
+        Backup::Database.new.dump
+        puts "done".green
       end
 
       task :restore => :environment do
-        backup_path_db = File.join(Gitlab.config.backup.path, "db")
-
-        puts "Restoring database tables (loading fixtures) ... "
-        Rake::Task["db:reset"].invoke
-
-        Dir.glob(File.join(backup_path_db, "*.yml") ).each do |dir|
-          fixture_file = File.basename(dir, ".*" )
-          print "#{fixture_file.yellow} ... "
-          if File.size(dir) > 0
-            ActiveRecord::Fixtures.create_fixtures(backup_path_db, fixture_file)
-            puts "done".green
-          else
-            puts "skipping".yellow
-          end
-        end
+        puts "Restoring database ... ".blue
+        Backup::Database.new.restore
+        puts "done".green
       end
     end
-
   end # namespace end: backup
 end # namespace end: gitlab

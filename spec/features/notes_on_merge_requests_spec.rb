@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe "On a merge request", js: true do
-  let!(:project) { create(:project) }
+  let!(:project) { create(:project_with_code) }
   let!(:merge_request) { create(:merge_request, project: project) }
 
   before do
@@ -20,11 +20,6 @@ describe "On a merge request", js: true do
     # button initalization
     it { find(".js-main-target-form input[type=submit]").value.should == "Add Comment" }
     it { within(".js-main-target-form") { should_not have_link("Cancel") } }
-
-    # notifiactions
-    it { within(".js-main-target-form") { should have_checked_field("Notify team via email") } }
-    it { within(".js-main-target-form") { should_not have_checked_field("Notify commit author") } }
-    it { within(".js-main-target-form") { should_not have_unchecked_field("Notify commit author") } }
 
     describe "without text" do
       it { within(".js-main-target-form") { should have_css(".js-note-preview-button", visible: false) } }
@@ -88,7 +83,7 @@ end
 
 
 describe "On a merge request diff", js: true, focus: true do
-  let!(:project) { create(:project) }
+  let!(:project) { create(:project_with_code) }
   let!(:merge_request) { create(:merge_request_with_diffs, project: project) }
 
   before do
@@ -125,9 +120,6 @@ describe "On a merge request diff", js: true, focus: true do
       # buttons
       it { should have_button("Add Comment") }
       it { should have_css(".js-close-discussion-note-form", text: "Cancel") }
-
-      # notification options
-      it { should have_checked_field("Notify team via email") }
 
       it "shouldn't add a second form for same row" do
         find("#4735dfc552ad7bf15ca468adc3cad9d05b624490_185_185.line_holder .js-add-diff-note-button").trigger("click")

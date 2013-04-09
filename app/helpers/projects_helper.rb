@@ -25,24 +25,14 @@ module ProjectsHelper
     author_html =  ""
 
     # Build avatar image tag
-    author_html << image_tag(gravatar_icon(author.try(:email)), width: 16, class: "lil_av") if opts[:avatar]
+    author_html << image_tag(gravatar_icon(author.try(:email)), width: 16, class: "avatar avatar-inline s16") if opts[:avatar]
 
     # Build name span tag
     author_html << content_tag(:span, sanitize(author.name), class: 'author')
 
     author_html = author_html.html_safe
 
-    tm = project.team_member_by_id(author)
-
-    if tm
-      link_to author_html, project_team_member_path(project, tm.user_username), class: "author_link"
-    else
-      author_html
-    end.html_safe
-  end
-
-  def tm_path team_member
-    project_team_member_path(@project, team_member)
+    link_to(author_html, user_path(author), class: "author_link").html_safe
   end
 
   def project_title project

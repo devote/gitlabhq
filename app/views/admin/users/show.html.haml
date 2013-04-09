@@ -3,7 +3,7 @@
     %h3.page_title
       = image_tag gravatar_icon(@admin_user.email, 90), class: "avatar s90"
       = @admin_user.name
-      - if @admin_user.blocked
+      - if @admin_user.blocked?
         %span.cred (Blocked)
       - if @admin_user.admin
         %span.cred (Admin)
@@ -16,6 +16,17 @@
       %br
       %small member since #{@admin_user.created_at.stamp("Nov 12, 2031")}
     .clearfix
+    %hr
+    %p
+      %span.btn.btn-small
+        %i.icon-envelope
+        = mail_to @admin_user.email
+      - unless @admin_user == current_user
+        - if @admin_user.blocked?
+          = link_to 'Unblock', unblock_admin_user_path(@admin_user), method: :put, class: "btn btn-small success"
+        - else
+          = link_to 'Block', block_admin_user_path(@admin_user), confirm: 'USER WILL BE BLOCKED! Are you sure?', method: :put, class: "btn btn-small btn-remove"
+        = link_to 'Destroy', [:admin, @admin_user], confirm: "USER #{@admin_user.name} WILL BE REMOVED! Are you sure?", method: :delete, class: "btn btn-small btn-remove"
     %hr
     %h5
       Add User to Projects

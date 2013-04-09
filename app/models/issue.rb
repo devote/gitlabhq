@@ -9,11 +9,11 @@
 #  project_id   :integer
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null
-#  state        :string           default(FALSE), not null
 #  position     :integer          default(0)
 #  branch_name  :string(255)
 #  description  :text
 #  milestone_id :integer
+#  state        :string(255)
 #
 
 class Issue < ActiveRecord::Base
@@ -28,6 +28,10 @@ class Issue < ActiveRecord::Base
   class << self
     def cared(user)
       where('assignee_id = :user', user: user.id)
+    end
+
+    def authored(user)
+      where('author_id = :user', user: user.id)
     end
 
     def open_for(user)

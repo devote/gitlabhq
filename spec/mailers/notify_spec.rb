@@ -5,7 +5,7 @@ describe Notify do
   include EmailSpec::Matchers
 
   let(:recipient) { create(:user, email: 'recipient@example.com') }
-  let(:project) { create(:project) }
+  let(:project) { create(:project_with_code) }
 
   shared_examples 'a multiple recipients email' do
     it 'is sent to the given recipient' do
@@ -70,6 +70,28 @@ describe Notify do
     end
   end
 
+  describe 'user added ssh key' do
+    let(:key) { create(:personal_key) }
+
+    subject { Notify.new_ssh_key_email(key.id) }
+
+    it 'is sent to the new user' do
+      should deliver_to key.user.email
+    end
+
+    it 'has the correct subject' do
+      should have_subject /^gitlab \| SSH key was added to your account$/i
+    end
+
+    it 'contains the new ssh key title' do
+      should have_body_text /#{key.title}/
+    end
+
+    it 'includes a link to ssh keys page' do
+      should have_body_text /#{keys_path}/
+    end
+  end
+
   context 'for a project' do
     describe 'items that are assignable, the email' do
       let(:assignee) { create(:user, email: 'assignee@example.com') }
@@ -85,7 +107,7 @@ describe Notify do
         let(:issue) { create(:issue, assignee: assignee, project: project ) }
 
         describe 'that are new' do
-          subject { Notify.new_issue_email(issue.id) }
+          subject { Notify.new_issue_email(issue.assignee_id, issue.id) }
 
           it_behaves_like 'an assignee email'
 
@@ -150,7 +172,7 @@ describe Notify do
         let(:merge_request) { create(:merge_request, assignee: assignee, project: project) }
 
         describe 'that are new' do
-          subject { Notify.new_merge_request_email(merge_request.id) }
+          subject { Notify.new_merge_request_email(merge_request.assignee_id, merge_request.id) }
 
           it_behaves_like 'an assignee email'
 
@@ -239,7 +261,7 @@ describe Notify do
       end
 
       describe 'on a project wall' do
-        let(:note_on_the_wall_path) { wall_project_path(project, anchor: "note_#{note.id}") }
+        let(:note_on_the_wall_path) { project_wall_path(project, anchor: "note_#{note.id}") }
 
         subject { Notify.note_wall_email(recipient.id, note.id) }
 
@@ -255,14 +277,7 @@ describe Notify do
       end
 
       describe 'on a commit' do
-        let(:commit) do
-          mock(:commit).tap do |commit|
-            commit.stub(:id).and_return('fauxsha1')
-            commit.stub(:project).and_return(project)
-            commit.stub(:short_id).and_return('fauxsha1')
-            commit.stub(:safe_message).and_return('some message')
-          end
-        end
+        let(:commit) { project.repository.commit }
 
         before(:each) { note.stub(:noteable).and_return(commit) }
 
@@ -275,7 +290,7 @@ describe Notify do
         end
 
         it 'contains a link to the commit' do
-          should have_body_text /fauxsha1/
+          should have_body_text commit.short_id
         end
       end
 
