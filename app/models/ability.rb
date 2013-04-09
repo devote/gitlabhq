@@ -41,7 +41,7 @@ class Ability
         rules << project_guest_rules
       end
 
-      if project.owner == user
+      if project.owner == user || user.admin?
         rules << project_admin_rules
       end
 
@@ -91,7 +91,6 @@ class Ability
         :admin_team_member,
         :admin_merge_request,
         :admin_note,
-        :accept_mr,
         :admin_wiki,
         :admin_project
       ]

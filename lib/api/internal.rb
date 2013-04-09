@@ -5,15 +5,32 @@ module Gitlab
       #
       # Check if ssh key has access to project code
       #
+      # Params:
+      #   key_id - SSH Key id
+      #   project - project path with namespace
+      #   action - git action (git-upload-pack or git-receive-pack)
+      #   ref - branch name
+      #
       get "/allowed" do
+        # Check for *.wiki repositories.
+        # Strip out the .wiki from the pathname before finding the
+        # project. This applies the correct project permissions to
+        # the wiki repository as well.
+        project_path = params[:project]
+        project_path.gsub!(/\.wiki/,'') if project_path =~ /\.wiki/
+
         key = Key.find(params[:key_id])
-        project = Project.find_with_namespace(params[:project])
+        project = Project.find_with_namespace(project_path)
         git_cmd = params[:action]
+
 
         if key.is_deploy_key
           project == key.project && git_cmd == 'git-upload-pack'
         else
           user = key.user
+
+          return false if user.blocked?
+
           action = case git_cmd
                    when 'git-upload-pack'
                      then :download_code
@@ -35,7 +52,7 @@ module Gitlab
       #
       get "/discover" do
         key = Key.find(params[:key_id])
-        present key.user, with: Entities::User
+        present key.user, with: Entities::UserSafe
       end
 
       get "/check" do

@@ -7,6 +7,8 @@ window.slugify = (text) ->
 window.ajaxGet = (url) ->
   $.ajax({type: "GET", url: url, dataType: "script"})
 
+window.showAndHide = (selector) ->
+
 window.errorMessage = (message) ->
   ehtml = $("<p>")
   ehtml.addClass("error_message")
@@ -32,6 +34,14 @@ window.disableButtonIfEmptyField = (field_selector, button_selector) ->
     else
       closest_submit.enable()
 
+window.sanitize = (str) ->
+  return str.replace(/<(?:.|\n)*?>/gm, '')
+
+window.linkify = (str) ->
+  exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig
+  return str.replace(exp,"<a href='$1'>$1</a>")
+
+
 $ ->
   # Click a .one_click_select field, select the contents
   $(".one_click_select").on 'click', -> $(@).select()
@@ -53,11 +63,13 @@ $ ->
   $('.trigger-submit').on 'change', ->
     $(@).parents('form').submit()
 
+  $("abbr.timeago").timeago()
+
   # Flash
-  if (flash = $("#flash-container")).length > 0
-    flash.click -> $(@).slideUp("slow")
-    flash.slideDown "slow"
-    setTimeout (-> flash.slideUp("slow")), 3000
+  if (flash = $(".flash-container")).length > 0
+    flash.click -> $(@).fadeOut()
+    flash.show()
+    setTimeout (-> flash.fadeOut()), 3000
 
   # Disable form buttons while a form is submitting
   $('body').on 'ajax:complete, ajax:beforeSend, submit', 'form', (e) ->

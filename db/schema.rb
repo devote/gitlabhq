@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130218141554) do
+ActiveRecord::Schema.define(:version => 20130404164628) do
 
   create_table "events", :force => true do |t|
     t.string   "target_type"
@@ -68,19 +68,19 @@ ActiveRecord::Schema.define(:version => 20130218141554) do
   add_index "keys", ["user_id"], :name => "index_keys_on_user_id"
 
   create_table "merge_requests", :force => true do |t|
-    t.string   "target_branch",                                      :null => false
-    t.string   "source_branch",                                      :null => false
-    t.integer  "project_id",                                         :null => false
+    t.string   "target_branch",                       :null => false
+    t.string   "source_branch",                       :null => false
+    t.integer  "project_id",                          :null => false
     t.integer  "author_id"
     t.integer  "assignee_id"
     t.string   "title"
-    t.datetime "created_at",                                         :null => false
-    t.datetime "updated_at",                                         :null => false
+    t.datetime "created_at",                          :null => false
+    t.datetime "updated_at",                          :null => false
     t.text     "st_commits",    :limit => 2147483647
     t.text     "st_diffs",      :limit => 2147483647
-    t.integer  "merge_status",                        :default => 1, :null => false
     t.integer  "milestone_id"
     t.string   "state"
+    t.string   "merge_status"
   end
 
   add_index "merge_requests", ["assignee_id"], :name => "index_merge_requests_on_assignee_id"
@@ -106,12 +106,13 @@ ActiveRecord::Schema.define(:version => 20130218141554) do
   add_index "milestones", ["project_id"], :name => "index_milestones_on_project_id"
 
   create_table "namespaces", :force => true do |t|
-    t.string   "name",       :null => false
-    t.string   "path",       :null => false
-    t.integer  "owner_id",   :null => false
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+    t.string   "name",                        :null => false
+    t.string   "path",                        :null => false
+    t.integer  "owner_id",                    :null => false
+    t.datetime "created_at",                  :null => false
+    t.datetime "updated_at",                  :null => false
     t.string   "type"
+    t.string   "description", :default => "", :null => false
   end
 
   add_index "namespaces", ["name"], :name => "index_namespaces_on_name"
@@ -142,19 +143,24 @@ ActiveRecord::Schema.define(:version => 20130218141554) do
     t.string   "name"
     t.string   "path"
     t.text     "description"
-    t.datetime "created_at",                                :null => false
-    t.datetime "updated_at",                                :null => false
+    t.datetime "created_at",                                   :null => false
+    t.datetime "updated_at",                                   :null => false
     t.integer  "creator_id"
     t.string   "default_branch"
-    t.boolean  "issues_enabled",         :default => true,  :null => false
-    t.boolean  "wall_enabled",           :default => true,  :null => false
-    t.boolean  "merge_requests_enabled", :default => true,  :null => false
-    t.boolean  "wiki_enabled",           :default => true,  :null => false
+    t.boolean  "issues_enabled",         :default => true,     :null => false
+    t.boolean  "wall_enabled",           :default => true,     :null => false
+    t.boolean  "merge_requests_enabled", :default => true,     :null => false
+    t.boolean  "wiki_enabled",           :default => true,     :null => false
     t.integer  "namespace_id"
-    t.boolean  "public",                 :default => false, :null => false
+    t.boolean  "public",                 :default => false,    :null => false
+    t.string   "issues_tracker",         :default => "gitlab", :null => false
+    t.string   "issues_tracker_id"
+    t.boolean  "snippets_enabled",       :default => true,     :null => false
+    t.datetime "last_activity_at"
   end
 
   add_index "projects", ["creator_id"], :name => "index_projects_on_owner_id"
+  add_index "projects", ["last_activity_at"], :name => "index_projects_on_last_activity_at"
   add_index "projects", ["namespace_id"], :name => "index_projects_on_namespace_id"
 
   create_table "protected_branches", :force => true do |t|
@@ -230,8 +236,9 @@ ActiveRecord::Schema.define(:version => 20130218141554) do
     t.string   "name"
     t.string   "path"
     t.integer  "owner_id"
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+    t.datetime "created_at",                  :null => false
+    t.datetime "updated_at",                  :null => false
+    t.string   "description", :default => "", :null => false
   end
 
   create_table "users", :force => true do |t|
@@ -254,10 +261,8 @@ ActiveRecord::Schema.define(:version => 20130218141554) do
     t.string   "linkedin",               :default => "",    :null => false
     t.string   "twitter",                :default => "",    :null => false
     t.string   "authentication_token"
-    t.boolean  "dark_scheme",            :default => false, :null => false
     t.integer  "theme_id",               :default => 1,     :null => false
     t.string   "bio"
-    t.boolean  "blocked",                :default => false, :null => false
     t.integer  "failed_attempts",        :default => 0
     t.datetime "locked_at"
     t.string   "extern_uid"
@@ -265,10 +270,12 @@ ActiveRecord::Schema.define(:version => 20130218141554) do
     t.string   "username"
     t.boolean  "can_create_group",       :default => true,  :null => false
     t.boolean  "can_create_team",        :default => true,  :null => false
+    t.string   "state"
+    t.integer  "color_scheme_id",        :default => 1,     :null => false
+    t.integer  "notification_level",     :default => 1,     :null => false
   end
 
   add_index "users", ["admin"], :name => "index_users_on_admin"
-  add_index "users", ["blocked"], :name => "index_users_on_blocked"
   add_index "users", ["email"], :name => "index_users_on_email", :unique => true
   add_index "users", ["extern_uid", "provider"], :name => "index_users_on_extern_uid_and_provider", :unique => true
   add_index "users", ["name"], :name => "index_users_on_name"
@@ -276,11 +283,12 @@ ActiveRecord::Schema.define(:version => 20130218141554) do
   add_index "users", ["username"], :name => "index_users_on_username"
 
   create_table "users_projects", :force => true do |t|
-    t.integer  "user_id",                       :null => false
-    t.integer  "project_id",                    :null => false
-    t.datetime "created_at",                    :null => false
-    t.datetime "updated_at",                    :null => false
-    t.integer  "project_access", :default => 0, :null => false
+    t.integer  "user_id",                           :null => false
+    t.integer  "project_id",                        :null => false
+    t.datetime "created_at",                        :null => false
+    t.datetime "updated_at",                        :null => false
+    t.integer  "project_access",     :default => 0, :null => false
+    t.integer  "notification_level", :default => 3, :null => false
   end
 
   add_index "users_projects", ["project_access"], :name => "index_users_projects_on_project_access"

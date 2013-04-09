@@ -8,12 +8,11 @@ class Teams::MembersController < Teams::ApplicationController
 
   def new
     @users = User.potential_team_members(user_team)
-    @users = UserDecorator.decorate @users
   end
 
   def create
     unless params[:user_ids].blank?
-      user_ids = params[:user_ids]
+      user_ids = params[:user_ids].split(',')
       access = params[:default_project_access]
       is_admin = params[:group_admin]
       user_team.add_members(user_ids, access, is_admin)

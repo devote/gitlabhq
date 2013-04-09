@@ -23,7 +23,7 @@ class PostReceive
 
     user = if identifier.blank?
              # Local push from gitlab
-             email = project.repository.commit(newrev).author.email rescue nil
+             email = project.repository.commit(newrev).author_email rescue nil
              User.find_by_email(email) if email
 
            elsif identifier =~ /\Auser-\d+\Z/
@@ -42,6 +42,6 @@ class PostReceive
       return false
     end
 
-    project.trigger_post_receive(oldrev, newrev, ref, user)
+    GitPushService.new.execute(project, user, oldrev, newrev, ref)
   end
 end
